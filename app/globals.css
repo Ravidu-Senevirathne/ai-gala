@@ -74,6 +74,18 @@ body {
   }
 }
 
+@keyframes chat-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes typing-dot {
   0%,
   100% {
@@ -102,6 +114,11 @@ body {
 
   .typing-node {
     animation: typing-dot 1.15s ease-in-out infinite;
+  }
+
+  .chat-pop-in {
+    animation: chat-pop-in 280ms ease-out;
+    transform-origin: bottom right;
   }
 }
 
