@@ -2,20 +2,26 @@
 
 import { useEffect, useState } from "react";
 import { BrowseShopsSection } from "./browse-shops-section";
+import { CategoriesSection } from "./categories-section";
 import { FeaturesSection } from "./features-section";
 import { HeroSection } from "./hero-section";
 import { HowItWorksSection } from "./how-it-works-section";
 import {
     browseShops,
+    categories,
     featureCards,
     navLinks,
     ownerSteps,
     quickPrompts,
+    stats,
     subtitlePhrases,
+    testimonials,
     userSteps,
 } from "./landing-data";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
+import { StatsSection } from "./stats-section";
+import { TestimonialsSection } from "./testimonials-section";
 import type { AssistantResponse } from "./types";
 import { useRevealOnScroll } from "./use-reveal-on-scroll";
 
@@ -91,9 +97,12 @@ export function LandingPage() {
                     onPromptSubmit={handlePromptSubmit}
                     onQuickPromptSelect={handleQuickPrompt}
                 />
+                <StatsSection stats={stats} />
+                <CategoriesSection categories={categories} />
                 <FeaturesSection featureCards={featureCards} />
                 <BrowseShopsSection browseShops={browseShops} />
                 <HowItWorksSection userSteps={userSteps} ownerSteps={ownerSteps} />
+                <TestimonialsSection testimonials={testimonials} />
             </main>
 
             <SiteFooter navLinks={navLinks} />

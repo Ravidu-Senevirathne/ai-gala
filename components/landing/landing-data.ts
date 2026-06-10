@@ -1,10 +1,50 @@
-import type { FeatureCard, NavigationLink, ShopCard, StepCard } from "./types";
+import type { CategoryCard, FeatureCard, NavigationLink, ShopCard, StatItem, StepCard, Testimonial } from "./types";
 
 export const navLinks: NavigationLink[] = [
     { label: "Home", href: "#home" },
+    { label: "Categories", href: "#categories" },
     { label: "Features", href: "#features" },
     { label: "Browse Shops", href: "#browse-shops" },
     { label: "Contact", href: "#contact" },
+];
+
+export const stats: StatItem[] = [
+    { value: "300+", label: "Verified listings" },
+    { value: "40+", label: "Service categories" },
+    { value: "2", label: "Languages supported" },
+    { value: "24/7", label: "AI assistant uptime" },
+];
+
+export const categories: CategoryCard[] = [
+    { icon: "💊", name: "Pharmacies", count: "32 listings" },
+    { icon: "🍛", name: "Food & Cafes", count: "58 listings" },
+    { icon: "🔧", name: "Repairs & Services", count: "41 listings" },
+    { icon: "🛒", name: "Groceries", count: "47 listings" },
+    { icon: "📱", name: "Electronics", count: "29 listings" },
+    { icon: "👕", name: "Fashion & Tailoring", count: "36 listings" },
+    { icon: "🏠", name: "Home & Hardware", count: "33 listings" },
+    { icon: "🚗", name: "Vehicle Services", count: "24 listings" },
+];
+
+export const testimonials: Testimonial[] = [
+    {
+        quote:
+            "මට රෑ 9 ටත් open pharmacy එකක් හොයාගන්න ඕන වුණා. AI-GALA එක තත්පර කිහිපයකින්ම හරියටම ලගම තියෙන තැන කිව්වා.",
+        name: "Nimal Perera",
+        role: "Resident, Kurunegala Town",
+    },
+    {
+        quote:
+            "I listed my hardware shop and started getting walk-ins the same week. Updating my open status takes seconds.",
+        name: "Samanthi Fernando",
+        role: "Owner, Fernando Hardware",
+    },
+    {
+        quote:
+            "Searching in Sinhala just works. No more scrolling through outdated Facebook groups to find what's open.",
+        name: "Ashan Jayasuriya",
+        role: "University Student",
+    },
 ];
 
 export const subtitlePhrases = [
