@@ -54,9 +54,54 @@ body {
   }
 }
 
+@keyframes marquee-scroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes shimmer-sweep {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes typing-dot {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0) scale(0.92);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1);
+  }
+}
+
 @layer utilities {
   .float-gentle {
     animation: float-gentle 7s ease-in-out infinite;
+  }
+
+  .marquee-track {
+    animation: marquee-scroll 26s linear infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer-sweep 1.6s linear infinite;
+  }
+
+  .typing-node {
+    animation: typing-dot 1.15s ease-in-out infinite;
   }
 }
 

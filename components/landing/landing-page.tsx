@@ -6,13 +6,14 @@ import { CategoriesSection } from "./categories-section";
 import { FeaturesSection } from "./features-section";
 import { HeroSection } from "./hero-section";
 import { HowItWorksSection } from "./how-it-works-section";
+import { LiveDiscountsMarquee } from "./live-discounts-marquee";
 import {
     browseShops,
     categories,
     featureCards,
+    liveDiscountDeals,
     navLinks,
     ownerSteps,
-    quickPrompts,
     stats,
     subtitlePhrases,
     testimonials,
@@ -22,43 +23,12 @@ import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 import { StatsSection } from "./stats-section";
 import { TestimonialsSection } from "./testimonials-section";
-import type { AssistantResponse } from "./types";
 import { useRevealOnScroll } from "./use-reveal-on-scroll";
-
-const defaultPrompt = quickPrompts[0];
-
-function buildResponse(query: string): AssistantResponse {
-    const normalized = query.toLowerCase();
-
-    if (normalized.includes("pharmacy")) {
-        return {
-            label: "Best live results",
-            headline: "3 pharmacies appear open right now",
-            details: "City Care Pharmacy, HealthHub, and Medline Store are marked open with quick contact actions.",
-        };
-    }
-
-    if (normalized.includes("coffee") || normalized.includes("cafe")) {
-        return {
-            label: "Nearby browse results",
-            headline: "2 cafes are currently open and active",
-            details: "You can compare hours, walk-in friendliness, and vibe before you head out.",
-        };
-    }
-
-    return {
-        label: "Smart directory response",
-        headline: "AI-GALA is ready to refine your search",
-        details: "Try asking for a shop type, a neighborhood, or whether a place is open right now.",
-    };
-}
 
 export function LandingPage() {
     useRevealOnScroll();
 
-    const [prompt, setPrompt] = useState(defaultPrompt);
     const [subtitleIndex, setSubtitleIndex] = useState(0);
-    const [response, setResponse] = useState<AssistantResponse>(() => buildResponse(defaultPrompt));
 
     useEffect(() => {
         const timer = window.setInterval(() => {
@@ -67,15 +37,6 @@ export function LandingPage() {
 
         return () => window.clearInterval(timer);
     }, []);
-
-    function handlePromptSubmit() {
-        setResponse(buildResponse(prompt));
-    }
-
-    function handleQuickPrompt(nextPrompt: string) {
-        setPrompt(nextPrompt);
-        setResponse(buildResponse(nextPrompt));
-    }
 
     return (
         <div className="min-h-screen overflow-x-hidden bg-[#0B192C] text-[#F1F1F1]">
@@ -88,15 +49,8 @@ export function LandingPage() {
             <SiteHeader navLinks={navLinks} />
 
             <main id="home">
-                <HeroSection
-                    promptValue={prompt}
-                    response={response}
-                    subtitle={subtitlePhrases[subtitleIndex]}
-                    quickPrompts={quickPrompts}
-                    onPromptChange={setPrompt}
-                    onPromptSubmit={handlePromptSubmit}
-                    onQuickPromptSelect={handleQuickPrompt}
-                />
+                <HeroSection subtitle={subtitlePhrases[subtitleIndex]} />
+                <LiveDiscountsMarquee discounts={liveDiscountDeals} />
                 <StatsSection stats={stats} />
                 <CategoriesSection categories={categories} />
                 <FeaturesSection featureCards={featureCards} />

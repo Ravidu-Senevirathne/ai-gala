@@ -1,4 +1,4 @@
-import type { CategoryCard, FeatureCard, NavigationLink, ShopCard, StatItem, StepCard, Testimonial } from "./types";
+import type { CategoryCard, ChatSuggestionChip, FeatureCard, MarqueeDeal, NavigationLink, ShopCard, StatItem, StepCard, Testimonial } from "./types";
 
 export const navLinks: NavigationLink[] = [
     { label: "Home", href: "#home" },
@@ -57,6 +57,18 @@ export const quickPrompts = [
     "මචං, මේ වෙලාවේ open pharmacy එකක් කියපන්",
     "Find a hardware shop open now near Kurunegala",
     "Best coffee place that is open late tonight",
+];
+
+export const budgetSuggestionChips: ChatSuggestionChip[] = [
+    { label: "මචං, 2000ට රෑට කන්න තැනක් කියපන්", tone: "budget" },
+    { label: "අද කුරුණෑගල තියෙන සිරාම Discounts මොනවාද?", tone: "status" },
+    { label: "Open Pharmacies right now", tone: "urgency" },
+];
+
+export const liveDiscountDeals: MarqueeDeal[] = [
+    { brand: "Nolimit", title: "Storewide Sale", offer: "20% Off Storewide", meta: "Ends tonight • Fashion" },
+    { brand: "Burger Hunt", title: "Combo Alert", offer: "Buy 1 Get 1 Free", meta: "Limited time • Food" },
+    { brand: "Softlogic", title: "Clearance Wave", offer: "Clearance Sale", meta: "Up to 40% off • Tech" },
 ];
 
 export const featureCards: FeatureCard[] = [

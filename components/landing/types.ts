@@ -8,6 +8,18 @@ export type FeatureCard = {
     description: string;
 };
 
+export type ChatSuggestionChip = {
+    label: string;
+    tone?: "budget" | "status" | "urgency";
+};
+
+export type MarqueeDeal = {
+    brand: string;
+    title: string;
+    offer: string;
+    meta: string;
+};
+
 export type StepCard = {
     title: string;
     description: string;
