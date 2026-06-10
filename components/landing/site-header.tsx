@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { NavigationLink } from "./types";
 
 type SiteHeaderProps = {
@@ -32,20 +34,20 @@ export function SiteHeader({ navLinks }: SiteHeaderProps) {
                             {link.label}
                         </a>
                     ))}
-                    <a
-                        href="#contact"
+                    <Link
+                        href="/auth"
                         className="inline-flex items-center justify-center rounded-full border border-[#FF6500]/40 bg-[#FF6500] px-5 py-2.5 text-sm font-medium text-white shadow-[0_0_24px_rgba(255,101,0,0.35)] transition duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,101,0,0.55)]"
                     >
                         Get Started
-                    </a>
+                    </Link>
                 </nav>
 
-                <a
-                    href="#contact"
+                <Link
+                    href="/auth"
                     className="inline-flex items-center justify-center rounded-full border border-[#FF6500]/40 bg-[#FF6500] px-4 py-2 text-sm font-medium text-white shadow-[0_0_24px_rgba(255,101,0,0.35)] transition duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,101,0,0.55)] md:hidden"
                 >
                     Start
-                </a>
+                </Link>
             </div>
         </header>
     );

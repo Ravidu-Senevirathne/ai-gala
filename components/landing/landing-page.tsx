@@ -15,7 +15,6 @@ import {
     subtitlePhrases,
     userSteps,
 } from "./landing-data";
-import { OwnerStatusToggle } from "./owner-status-toggle";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 import { useRevealOnScroll } from "./use-reveal-on-scroll";
@@ -48,7 +47,6 @@ export function LandingPage() {
                 <LiveDiscountsMarquee discounts={liveDiscountDeals} />
                 <FeaturesSection featureCards={featureCards} />
                 <BrowseShopsSection browseShops={browseShops} />
-                <OwnerStatusToggle />
                 <HowItWorksSection userSteps={userSteps} ownerSteps={ownerSteps} />
             </main>
 
