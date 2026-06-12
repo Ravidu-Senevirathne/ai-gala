@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { BrowseShopsSection } from "./browse-shops-section";
 import { CategoriesSection } from "./categories-section";
 import { FeaturesSection } from "./features-section";
@@ -21,12 +21,15 @@ import {
     userSteps,
 } from "./landing-data";
 import { SiteFooter } from "./site-footer";
-import { SiteHeader } from "./site-header";
 import { StatsSection } from "./stats-section";
 import { TestimonialsSection } from "./testimonials-section";
 import { useRevealOnScroll } from "./use-reveal-on-scroll";
 
-export function LandingPage() {
+type LandingPageProps = {
+    header: ReactNode;
+};
+
+export function LandingPage({ header }: LandingPageProps) {
     useRevealOnScroll();
 
     const [subtitleIndex, setSubtitleIndex] = useState(0);
@@ -47,7 +50,7 @@ export function LandingPage() {
                 <div className="absolute bottom-[-10rem] left-1/2 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-white/5 blur-3xl" />
             </div>
 
-            <SiteHeader navLinks={navLinks} />
+            {header}
 
             <main id="home">
                 <HeroSection subtitle={subtitlePhrases[subtitleIndex]} />

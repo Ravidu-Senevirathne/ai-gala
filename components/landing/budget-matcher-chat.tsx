@@ -1,14 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { buildAssistantResponse, defaultChatSuggestionChips } from "./chat-assistant";
-import type { AssistantResponse, ChatSuggestionChip } from "./types";
+import { useRef, useState } from "react";
+
+import { ChatResultCards } from "./chat-result-cards";
+import { defaultChatSuggestionChips } from "./chat-assistant";
+import type { ChatSuggestionChip } from "./types";
+import type { JobResult, ShopResult } from "@/lib/ai/types";
 
 type BudgetMatcherChatProps = {
     suggestionChips?: ChatSuggestionChip[];
 };
 
 const defaultChips = defaultChatSuggestionChips;
+
+type ChatApiResult = {
+    reply: string;
+    results?: ShopResult[] | JobResult[];
+    resultType?: "shop" | "job";
+};
 
 function ThinkingState() {
     return (
@@ -19,7 +28,7 @@ function ThinkingState() {
                     <span className="typing-node h-2.5 w-2.5 rounded-full bg-[#FFB27A] shadow-[0_0_12px_rgba(255,178,122,0.4)] [animation-delay:180ms]" />
                     <span className="typing-node h-2.5 w-2.5 rounded-full bg-white/70 shadow-[0_0_12px_rgba(255,255,255,0.3)] [animation-delay:360ms]" />
                 </span>
-                <span className="font-medium text-white">Gemini is thinking...</span>
+                <span className="font-medium text-white">AI-GALA is thinking...</span>
             </div>
 
             <div className="rounded-[1.25rem] border border-white/10 bg-white/5 p-4">
@@ -38,23 +47,30 @@ function ThinkingState() {
     );
 }
 
-function ResponseCard({ response, query }: { response: AssistantResponse; query: string }) {
+function ResponseCard({ result, query }: { result: ChatApiResult | null; query: string }) {
+    if (!result) {
+        return (
+            <div className="space-y-4 rounded-[1.35rem] border border-[#FF6500]/25 bg-[#081321]/85 p-4 shadow-[0_0_36px_rgba(255,101,0,0.08)] backdrop-blur-xl">
+                <p className="text-sm leading-7 text-white/70">
+                    Ask AI-GALA about a budget, category, or urgency to get matched results for Kurunegala.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-4 rounded-[1.35rem] border border-[#FF6500]/25 bg-[#081321]/85 p-4 shadow-[0_0_36px_rgba(255,101,0,0.08)] backdrop-blur-xl">
             <div className="flex items-center justify-between gap-3">
                 <div>
                     <p className="text-xs uppercase tracking-[0.3em] text-white/45">AI-GALA result</p>
-                    <h3 className="mt-1 text-lg font-semibold text-white">{response.headline}</h3>
+                    <h3 className="mt-1 text-lg font-semibold text-white">{result.reply}</h3>
                 </div>
-                <span className="rounded-full border border-[#FF6500]/25 bg-[#FF6500]/10 px-3 py-1 text-xs text-[#FFB27A]">
-                    Live buffer cleared
-                </span>
+                <span className="rounded-full border border-[#FF6500]/25 bg-[#FF6500]/10 px-3 py-1 text-xs text-[#FFB27A]">Live</span>
             </div>
 
-            <div className="rounded-[1.25rem] border border-white/10 bg-white/5 p-4">
-                <p className="text-xs uppercase tracking-[0.3em] text-[#FFB27A]">{response.label}</p>
-                <p className="mt-3 text-sm leading-7 text-white/78">{response.details}</p>
-            </div>
+            {result.results && result.resultType && result.results.length > 0 && (
+                <ChatResultCards results={result.results} resultType={result.resultType} />
+            )}
 
             <div className="rounded-[1.25rem] border border-white/10 bg-[#0E1C31] p-4 text-sm text-white/70">
                 <span className="text-white/45">Query:</span> {query}
@@ -66,48 +82,57 @@ function ResponseCard({ response, query }: { response: AssistantResponse; query:
 export function BudgetMatcherChat({ suggestionChips = defaultChips }: BudgetMatcherChatProps) {
     const defaultQuery = suggestionChips[0]?.label ?? "";
     const [query, setQuery] = useState(defaultQuery);
-    const [response, setResponse] = useState<AssistantResponse>(() => buildAssistantResponse(defaultQuery));
+    const [result, setResult] = useState<ChatApiResult | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
-    const cooldownRef = useRef<number | null>(null);
-    const responseRef = useRef<number | null>(null);
+    const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
+    const locationRequestedRef = useRef(false);
 
-    useEffect(() => {
-        return () => {
-            if (cooldownRef.current !== null) {
-                window.clearTimeout(cooldownRef.current);
-            }
+    function requestLocation() {
+        if (locationRequestedRef.current || typeof navigator === "undefined" || !navigator.geolocation) {
+            return;
+        }
+        locationRequestedRef.current = true;
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                userLocationRef.current = { lat: position.coords.latitude, lng: position.coords.longitude };
+            },
+            () => {
+                userLocationRef.current = null;
+            },
+        );
+    }
 
-            if (responseRef.current !== null) {
-                window.clearTimeout(responseRef.current);
-            }
-        };
-    }, []);
-
-    function runQuery(nextQuery: string) {
+    async function runQuery(nextQuery: string) {
         if (isProcessing) {
             return;
         }
 
+        requestLocation();
         setQuery(nextQuery);
         setIsProcessing(true);
 
-        if (cooldownRef.current !== null) {
-            window.clearTimeout(cooldownRef.current);
-        }
+        try {
+            const response = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    messages: [{ role: "user", content: nextQuery }],
+                    userLocation: userLocationRef.current,
+                    localTime: new Date().toISOString(),
+                }),
+            });
 
-        if (responseRef.current !== null) {
-            window.clearTimeout(responseRef.current);
-        }
+            if (!response.ok) {
+                throw new Error("Chat request failed");
+            }
 
-        responseRef.current = window.setTimeout(() => {
-            setResponse(buildAssistantResponse(nextQuery));
-            responseRef.current = null;
-        }, 2100);
-
-        cooldownRef.current = window.setTimeout(() => {
+            const data = (await response.json()) as ChatApiResult;
+            setResult(data);
+        } catch {
+            setResult({ reply: "Sorry, something went wrong while reaching AI-GALA. Please try again." });
+        } finally {
             setIsProcessing(false);
-            cooldownRef.current = null;
-        }, 5000);
+        }
     }
 
     return (
@@ -126,7 +151,7 @@ export function BudgetMatcherChat({ suggestionChips = defaultChips }: BudgetMatc
                 className="mt-5 space-y-4"
                 onSubmit={(event) => {
                     event.preventDefault();
-                    runQuery(query.trim() || defaultQuery);
+                    void runQuery(query.trim() || defaultQuery);
                 }}
             >
                 <label className="block text-xs uppercase tracking-[0.35em] text-white/55">
@@ -155,7 +180,7 @@ export function BudgetMatcherChat({ suggestionChips = defaultChips }: BudgetMatc
                             key={chip.label}
                             type="button"
                             disabled={isProcessing}
-                            onClick={() => runQuery(chip.label)}
+                            onClick={() => void runQuery(chip.label)}
                             className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs text-white/70 transition duration-300 hover:scale-105 hover:border-[#FF6500]/50 hover:bg-[#FF6500]/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                         >
                             {chip.label}
@@ -164,7 +189,7 @@ export function BudgetMatcherChat({ suggestionChips = defaultChips }: BudgetMatc
                 </div>
             </form>
 
-            <div className="mt-5 min-h-[240px]">{isProcessing ? <ThinkingState /> : <ResponseCard response={response} query={query} />}</div>
+            <div className="mt-5 min-h-[240px]">{isProcessing ? <ThinkingState /> : <ResponseCard result={result} query={query} />}</div>
         </div>
     );
 }

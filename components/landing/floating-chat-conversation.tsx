@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { buildAssistantResponse, defaultChatSuggestionChips } from "./chat-assistant";
+
+import { ChatResultCards } from "./chat-result-cards";
+import { defaultChatSuggestionChips } from "./chat-assistant";
+import type { JobResult, ShopResult } from "@/lib/ai/types";
 
 type ChatMessage = {
     id: number;
     role: "user" | "assistant";
     text: string;
+    results?: ShopResult[] | JobResult[];
+    resultType?: "shop" | "job";
 };
 
 let messageId = 0;
@@ -36,59 +41,100 @@ export function FloatingChatConversation() {
     ]);
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
-    const replyTimer = useRef<number | null>(null);
     const scrollRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        return () => {
-            if (replyTimer.current !== null) {
-                window.clearTimeout(replyTimer.current);
-            }
-        };
-    }, []);
+    const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
+    const locationRequestedRef = useRef(false);
 
     useEffect(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
     }, [messages, isTyping]);
 
-    function sendMessage(text: string) {
+    function requestLocation() {
+        if (locationRequestedRef.current || !navigator.geolocation) {
+            return;
+        }
+        locationRequestedRef.current = true;
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                userLocationRef.current = { lat: position.coords.latitude, lng: position.coords.longitude };
+            },
+            () => {
+                userLocationRef.current = null;
+            },
+        );
+    }
+
+    async function sendMessage(text: string) {
         const trimmed = text.trim();
         if (!trimmed || isTyping) {
             return;
         }
 
-        setMessages((current) => [...current, { id: nextId(), role: "user", text: trimmed }]);
+        requestLocation();
+
+        const history = [...messages, { id: nextId(), role: "user" as const, text: trimmed }];
+        setMessages(history);
         setInput("");
         setIsTyping(true);
 
-        replyTimer.current = window.setTimeout(() => {
-            const response = buildAssistantResponse(trimmed);
+        try {
+            const response = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    messages: history.map((message) => ({ role: message.role, content: message.text })),
+                    userLocation: userLocationRef.current,
+                    localTime: new Date().toISOString(),
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Chat request failed");
+            }
+
+            const data = (await response.json()) as { reply: string; results?: ShopResult[] | JobResult[]; resultType?: "shop" | "job" };
+
             setMessages((current) => [
                 ...current,
                 {
                     id: nextId(),
                     role: "assistant",
-                    text: `${response.headline}\n${response.details}`,
+                    text: data.reply || "Here's what I found.",
+                    results: data.results,
+                    resultType: data.resultType,
                 },
             ]);
+        } catch {
+            setMessages((current) => [
+                ...current,
+                {
+                    id: nextId(),
+                    role: "assistant",
+                    text: "Sorry, something went wrong while reaching AI-GALA. Please try again.",
+                },
+            ]);
+        } finally {
             setIsTyping(false);
-            replyTimer.current = null;
-        }, 1400);
+        }
     }
 
     return (
         <div className="flex h-full flex-col">
             <div ref={scrollRef} className="flex max-h-[50vh] min-h-[260px] flex-col gap-3 overflow-y-auto p-4">
                 {messages.map((message) => (
-                    <div
-                        key={message.id}
-                        className={`max-w-[85%] whitespace-pre-line rounded-2xl px-4 py-3 text-sm leading-6 ${
-                            message.role === "user"
-                                ? "self-end rounded-br-sm bg-[#FF6500] text-white shadow-[0_0_20px_rgba(255,101,0,0.3)]"
-                                : "self-start rounded-bl-sm border border-white/10 bg-white/5 text-white/85"
-                        }`}
-                    >
-                        {message.text}
+                    <div key={message.id} className="flex flex-col gap-3">
+                        <div
+                            className={`max-w-[85%] whitespace-pre-line rounded-2xl px-4 py-3 text-sm leading-6 ${
+                                message.role === "user"
+                                    ? "self-end rounded-br-sm bg-[#FF6500] text-white shadow-[0_0_20px_rgba(255,101,0,0.3)]"
+                                    : "self-start rounded-bl-sm border border-white/10 bg-white/5 text-white/85"
+                            }`}
+                        >
+                            {message.text}
+                        </div>
+                        {message.results && message.resultType && (
+                            <ChatResultCards results={message.results} resultType={message.resultType} />
+                        )}
                     </div>
                 ))}
                 {isTyping && <TypingBubble />}
@@ -114,7 +160,7 @@ export function FloatingChatConversation() {
                 className="flex items-center gap-2 border-t border-white/10 p-3"
                 onSubmit={(event) => {
                     event.preventDefault();
-                    sendMessage(input);
+                    void sendMessage(input);
                 }}
             >
                 <input

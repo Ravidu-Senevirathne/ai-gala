@@ -31,12 +31,6 @@ export type ShopCard = {
     note: string;
 };
 
-export type AssistantResponse = {
-    label: string;
-    headline: string;
-    details: string;
-};
-
 export type CategoryCard = {
     icon: string;
     name: string;

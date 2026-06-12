@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
+
+import { createClient } from "@/lib/supabase/client";
 
 type AuthMode = "login" | "signup";
 type Role = "user" | "owner";
@@ -180,10 +183,17 @@ const socialProviders: { id: SocialProvider; label: string; icon: ReactNode; hov
     },
 ];
 
-function SocialButton({ provider }: { provider: (typeof socialProviders)[number] }) {
+function SocialButton({
+    provider,
+    onClick,
+}: {
+    provider: (typeof socialProviders)[number];
+    onClick: () => void;
+}) {
     return (
         <button
             type="button"
+            onClick={onClick}
             className={`inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 text-sm font-medium text-white/85 transition duration-200 hover:scale-[1.02] hover:text-white active:scale-[0.98] ${provider.hover}`}
         >
             {provider.icon}
@@ -193,20 +203,178 @@ function SocialButton({ provider }: { provider: (typeof socialProviders)[number]
 }
 
 export function AuthPages() {
+    const router = useRouter();
+    const supabase = useMemo(() => createClient(), []);
+
     const [mode, setMode] = useState<AuthMode>("login");
     const [role, setRole] = useState<Role>("user");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [fullName, setFullName] = useState("");
+    const [ownerPhone, setOwnerPhone] = useState("");
     const [phoneDigits, setPhoneDigits] = useState(Array(6).fill(""));
     const [verificationCode, setVerificationCode] = useState("");
+    const [otpSent, setOtpSent] = useState(false);
+    const [phoneVerified, setPhoneVerified] = useState(false);
 
-    const phoneNumber = useMemo(() => phoneDigits.join(""), [phoneDigits]);
+    const [error, setError] = useState<string | null>(null);
+    const [info, setInfo] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSendingOtp, setIsSendingOtp] = useState(false);
+    const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+
+    const otpCode = useMemo(() => phoneDigits.join(""), [phoneDigits]);
 
     const updateDigit = (index: number, value: string) => {
         const digit = value.replace(/\D/g, "").slice(-1);
         setPhoneDigits((current) => current.map((entry, entryIndex) => (entryIndex === index ? digit : entry)));
     };
+
+    async function redirectByRole(userId: string) {
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", userId)
+            .single();
+
+        if (profile?.role === "admin") {
+            router.push("/admin");
+        } else if (profile?.role === "owner") {
+            router.push("/owner");
+        } else {
+            router.push("/");
+        }
+    }
+
+    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        setError(null);
+        setInfo(null);
+        setIsSubmitting(true);
+
+        try {
+            if (mode === "signup") {
+                const { data, error: signUpError } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            role,
+                            full_name: fullName || null,
+                        },
+                    },
+                });
+
+                if (signUpError) {
+                    setError(signUpError.message);
+                    return;
+                }
+
+                if (role === "owner" && verificationCode && data.user) {
+                    await supabase
+                        .from("profiles")
+                        .update({ shop_verification_code: verificationCode })
+                        .eq("id", data.user.id);
+                }
+
+                if (!data.session) {
+                    setInfo("Account created! Check your email to confirm before logging in.");
+                    return;
+                }
+
+                await redirectByRole(data.user!.id);
+            } else {
+                const { data, error: signInError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+
+                if (signInError) {
+                    setError(signInError.message);
+                    return;
+                }
+
+                await redirectByRole(data.user.id);
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
+    async function handleSocialLogin(provider: SocialProvider) {
+        setError(null);
+        const { error: oauthError } = await supabase.auth.signInWithOAuth({
+            provider,
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+            },
+        });
+
+        if (oauthError) {
+            setError(oauthError.message);
+        }
+    }
+
+    async function handleSendOtp() {
+        setError(null);
+        setInfo(null);
+
+        if (!ownerPhone) {
+            setError("Enter a phone number first.");
+            return;
+        }
+
+        setIsSendingOtp(true);
+        try {
+            const { error: otpError } = await supabase.auth.signInWithOtp({ phone: ownerPhone });
+            if (otpError) {
+                setError(otpError.message);
+                return;
+            }
+            setOtpSent(true);
+            setInfo("Verification code sent via SMS.");
+        } finally {
+            setIsSendingOtp(false);
+        }
+    }
+
+    async function handleVerifyOtp() {
+        setError(null);
+        setInfo(null);
+
+        if (otpCode.length !== 6) {
+            setError("Enter the 6-digit code sent to your phone.");
+            return;
+        }
+
+        setIsVerifyingOtp(true);
+        try {
+            const { error: verifyError } = await supabase.auth.verifyOtp({
+                phone: ownerPhone,
+                token: otpCode,
+                type: "sms",
+            });
+
+            if (verifyError) {
+                setError(verifyError.message);
+                return;
+            }
+
+            const { data: userData } = await supabase.auth.getUser();
+            if (userData.user) {
+                await supabase
+                    .from("profiles")
+                    .update({ phone: ownerPhone, phone_verified: true })
+                    .eq("id", userData.user.id);
+            }
+
+            setPhoneVerified(true);
+            setInfo("Phone number verified.");
+        } finally {
+            setIsVerifyingOtp(false);
+        }
+    }
 
     return (
         <div className="min-h-screen bg-[#0B192C] text-[#F1F1F1]">
@@ -303,7 +471,29 @@ export function AuthPages() {
                             ))}
                         </div>
 
-                        <form className="mt-6 space-y-4">
+                        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+                            {error ? (
+                                <div className="rounded-2xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200">
+                                    {error}
+                                </div>
+                            ) : null}
+
+                            {info ? (
+                                <div className="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
+                                    {info}
+                                </div>
+                            ) : null}
+
+                            {mode === "signup" ? (
+                                <GlassField
+                                    label="Full name"
+                                    placeholder="Your name"
+                                    value={fullName}
+                                    onChange={setFullName}
+                                    icon={<UserIcon />}
+                                />
+                            ) : null}
+
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <GlassField
                                     label="Email"
@@ -358,22 +548,60 @@ export function AuthPages() {
                                     </div>
 
                                     <div className="grid gap-4 sm:grid-cols-[1.2fr_0.8fr]">
-                                        <label className="block space-y-2">
+                                        <div className="space-y-2">
                                             <span className="text-sm font-medium text-white/80">Phone Number</span>
                                             <div className="flex gap-2">
-                                                {phoneDigits.map((digit, index) => (
-                                                    <input
-                                                        key={index}
-                                                        inputMode="numeric"
-                                                        maxLength={1}
-                                                        value={digit}
-                                                        onChange={(event) => updateDigit(index, event.target.value)}
-                                                        className="h-12 w-full min-w-0 rounded-xl border border-white/10 bg-white/5 text-center text-lg font-semibold text-white outline-none transition focus:border-[#FF6500]/50 focus:ring-2 focus:ring-[#FF6500]/20"
-                                                    />
-                                                ))}
+                                                <input
+                                                    type="tel"
+                                                    inputMode="tel"
+                                                    placeholder="+947XXXXXXXX"
+                                                    value={ownerPhone}
+                                                    onChange={(event) => setOwnerPhone(event.target.value)}
+                                                    className="min-h-12 flex-1 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none transition focus:border-[#FF6500]/50 focus:ring-2 focus:ring-[#FF6500]/20"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSendOtp}
+                                                    disabled={isSendingOtp || phoneVerified}
+                                                    className="shrink-0 rounded-xl border border-[#FF6500]/40 bg-[#FF6500]/15 px-4 text-sm font-medium text-white transition hover:bg-[#FF6500]/25 disabled:cursor-not-allowed disabled:opacity-55"
+                                                >
+                                                    {isSendingOtp ? "Sending..." : otpSent ? "Resend" : "Send code"}
+                                                </button>
                                             </div>
-                                            <p className="text-xs text-white/45">Mock OTP entry: {phoneNumber || "000000"}</p>
-                                        </label>
+
+                                            {otpSent && !phoneVerified ? (
+                                                <div className="space-y-2">
+                                                    <div className="flex gap-2">
+                                                        {phoneDigits.map((digit, index) => (
+                                                            <input
+                                                                key={index}
+                                                                inputMode="numeric"
+                                                                maxLength={1}
+                                                                value={digit}
+                                                                onChange={(event) => updateDigit(index, event.target.value)}
+                                                                className="h-12 w-full min-w-0 rounded-xl border border-white/10 bg-white/5 text-center text-lg font-semibold text-white outline-none transition focus:border-[#FF6500]/50 focus:ring-2 focus:ring-[#FF6500]/20"
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleVerifyOtp}
+                                                        disabled={isVerifyingOtp}
+                                                        className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-xs font-medium text-emerald-200 transition hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-55"
+                                                    >
+                                                        {isVerifyingOtp ? "Verifying..." : "Verify code"}
+                                                    </button>
+                                                </div>
+                                            ) : null}
+
+                                            {phoneVerified ? (
+                                                <p className="text-xs text-emerald-300">Phone verified ✓</p>
+                                            ) : (
+                                                <p className="text-xs text-white/45">
+                                                    SMS verification requires an SMS provider configured in Supabase.
+                                                </p>
+                                            )}
+                                        </div>
 
                                         <GlassField
                                             label="Shop Verification Code"
@@ -388,16 +616,11 @@ export function AuthPages() {
                             <div className="flex flex-col gap-3 sm:flex-row">
                                 <button
                                     type="submit"
-                                    className="inline-flex min-h-14 flex-1 items-center justify-center rounded-2xl bg-[#FF6500] px-6 text-sm font-semibold text-white shadow-[0_0_24px_rgba(255,101,0,0.35)] transition duration-300 hover:scale-[1.01] hover:shadow-[0_0_34px_rgba(255,101,0,0.55)] active:scale-[0.99]"
+                                    disabled={isSubmitting}
+                                    className="inline-flex min-h-14 flex-1 items-center justify-center rounded-2xl bg-[#FF6500] px-6 text-sm font-semibold text-white shadow-[0_0_24px_rgba(255,101,0,0.35)] transition duration-300 hover:scale-[1.01] hover:shadow-[0_0_34px_rgba(255,101,0,0.55)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    {mode === "login" ? "Login" : "Create Account"}
+                                    {isSubmitting ? "Please wait..." : mode === "login" ? "Login" : "Create Account"}
                                 </button>
-                                <a
-                                    href="/owner"
-                                    className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-6 text-sm font-medium text-white/75 transition hover:border-[#FF6500]/35 hover:text-white"
-                                >
-                                    Continue to Owner View
-                                </a>
                             </div>
 
                             <div className="flex items-center gap-3 pt-2">
@@ -408,7 +631,11 @@ export function AuthPages() {
 
                             <div className="flex gap-3">
                                 {socialProviders.map((provider) => (
-                                    <SocialButton key={provider.id} provider={provider} />
+                                    <SocialButton
+                                        key={provider.id}
+                                        provider={provider}
+                                        onClick={() => handleSocialLogin(provider.id)}
+                                    />
                                 ))}
                             </div>
 
