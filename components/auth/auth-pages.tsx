@@ -243,7 +243,7 @@ export function AuthPages() {
         } else if (profile?.role === "owner") {
             router.push("/owner");
         } else {
-            router.push("/");
+            router.push("/?welcome=1");
         }
     }
 

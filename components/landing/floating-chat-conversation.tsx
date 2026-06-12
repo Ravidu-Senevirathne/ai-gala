@@ -31,12 +31,18 @@ function TypingBubble() {
     );
 }
 
-export function FloatingChatConversation() {
+type FloatingChatConversationProps = {
+    greetingOverride?: string;
+};
+
+export function FloatingChatConversation({ greetingOverride }: FloatingChatConversationProps) {
     const [messages, setMessages] = useState<ChatMessage[]>([
         {
             id: nextId(),
             role: "assistant",
-            text: "Ayubowan! Ask me about budgets, open shops, or live discounts in Kurunegala — Sinhala, Singlish, or English all work.",
+            text:
+                greetingOverride ??
+                "Ayubowan! Ask me about budgets, open shops, or live discounts in Kurunegala — Sinhala, Singlish, or English all work.",
         },
     ]);
     const [input, setInput] = useState("");

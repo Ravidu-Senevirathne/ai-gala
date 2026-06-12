@@ -1,10 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FloatingChatConversation } from "./floating-chat-conversation";
 
-export function FloatingChatbot() {
+type FloatingChatbotProps = {
+    userName?: string | null;
+};
+
+export function FloatingChatbot({ userName }: FloatingChatbotProps) {
     const [isOpen, setIsOpen] = useState(false);
+
+    const greeting = userName
+        ? `Hi ${userName.split(" ")[0]}, what do you want in ${process.env.NEXT_PUBLIC_DEFAULT_DISTRICT ?? "Kurunegala"}?`
+        : undefined;
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("welcome") !== "1") {
+            return;
+        }
+
+        setIsOpen(true);
+
+        params.delete("welcome");
+        const query = params.toString();
+        window.history.replaceState({}, "", query ? `${window.location.pathname}?${query}` : window.location.pathname);
+    }, []);
 
     return (
         <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-4 sm:bottom-8 sm:right-8">
@@ -44,7 +65,7 @@ export function FloatingChatbot() {
                         </button>
                     </div>
 
-                    <FloatingChatConversation />
+                    <FloatingChatConversation greetingOverride={greeting} />
                 </div>
             )}
 

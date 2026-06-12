@@ -6,7 +6,25 @@ export async function GET(request: Request) {
 
     if (code) {
         const supabase = await createClient();
-        await supabase.auth.exchangeCodeForSession(code);
+        const { data } = await supabase.auth.exchangeCodeForSession(code);
+
+        if (data.user) {
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("role")
+                .eq("id", data.user.id)
+                .single();
+
+            if (profile?.role === "admin") {
+                return Response.redirect(`${origin}/admin`);
+            }
+
+            if (profile?.role === "owner") {
+                return Response.redirect(`${origin}/owner`);
+            }
+        }
+
+        return Response.redirect(`${origin}/?welcome=1`);
     }
 
     return Response.redirect(origin);

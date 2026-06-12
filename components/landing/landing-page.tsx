@@ -27,9 +27,10 @@ import { useRevealOnScroll } from "./use-reveal-on-scroll";
 
 type LandingPageProps = {
     header: ReactNode;
+    userName?: string | null;
 };
 
-export function LandingPage({ header }: LandingPageProps) {
+export function LandingPage({ header, userName }: LandingPageProps) {
     useRevealOnScroll();
 
     const [subtitleIndex, setSubtitleIndex] = useState(0);
@@ -65,7 +66,7 @@ export function LandingPage({ header }: LandingPageProps) {
 
             <SiteFooter navLinks={navLinks} />
 
-            <FloatingChatbot />
+            <FloatingChatbot userName={userName} />
         </div>
     );
 }
