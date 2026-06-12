@@ -1,9 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
+
+import { ShopProfileForm } from "./shop-profile-form";
 
 type Offer = {
     title: string;
@@ -198,8 +201,10 @@ function PostJobTab() {
 }
 
 export function ShopOwnerDashboard() {
-    const [activeTab, setActiveTab] = useState<"overview" | "jobs">("overview");
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState<"profile" | "overview" | "jobs">("profile");
     const [isEmergencyClosed, setIsEmergencyClosed] = useState(false);
+    const [isSigningOut, setIsSigningOut] = useState(false);
     const [offerTitle, setOfferTitle] = useState("");
     const [discountPercent, setDiscountPercent] = useState("");
     const [validUntil, setValidUntil] = useState("");
@@ -215,6 +220,14 @@ export function ShopOwnerDashboard() {
         ],
         [],
     );
+
+    async function handleSignOut() {
+        setIsSigningOut(true);
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        router.push("/");
+        router.refresh();
+    }
 
     const submitOffer = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -241,13 +254,34 @@ export function ShopOwnerDashboard() {
 
             <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
                 <header className="rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                    <p className="text-xs uppercase tracking-[0.35em] text-white/45">Owner workspace</p>
-                    <h1 className="mt-2 text-3xl font-semibold text-white">Shop Owner Dashboard</h1>
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <p className="text-xs uppercase tracking-[0.35em] text-white/45">Owner workspace</p>
+                            <h1 className="mt-2 text-3xl font-semibold text-white">Shop Owner Dashboard</h1>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleSignOut}
+                            disabled={isSigningOut}
+                            className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:border-[#FF6500]/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {isSigningOut ? "..." : "Log out"}
+                        </button>
+                    </div>
+
                     <p className="mt-3 max-w-3xl text-sm leading-7 text-white/70">
                         Manage live availability, publish discounts, post jobs, and track visibility signals without touching the public landing page.
                     </p>
 
                     <div className="mt-5 flex w-fit gap-2 rounded-full border border-white/10 bg-white/5 p-1">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("profile")}
+                            className={`rounded-full px-4 py-2 text-sm font-medium transition ${activeTab === "profile" ? "bg-[#FF6500] text-white shadow-[0_0_20px_rgba(255,101,0,0.35)]" : "text-white/60 hover:text-white"}`}
+                        >
+                            Shop Profile
+                        </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab("overview")}
@@ -265,7 +299,9 @@ export function ShopOwnerDashboard() {
                     </div>
                 </header>
 
-                {activeTab === "jobs" ? (
+                {activeTab === "profile" ? (
+                    <ShopProfileForm />
+                ) : activeTab === "jobs" ? (
                     <PostJobTab />
                 ) : (
                     <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">

@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
+import type { MessageParam } from "@anthropic-ai/sdk/resources";
 
 import { searchDirectory } from "@/lib/ai/search-directory";
 import { buildSystemPrompt } from "@/lib/ai/system-prompt";
