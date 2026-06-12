@@ -3,81 +3,18 @@
 import Link from "next/link";
 import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 
+import { DEFAULT_CATEGORY_ICON, NEW_CATEGORY_VALUE, resolveCategory } from "@/lib/shop-categories";
+import { type DayKey, DAY_LABELS, DAY_ORDER, type DayHours, defaultHours, parseHours, serializeHours } from "@/lib/shop-hours";
 import { createClient } from "@/lib/supabase/client";
-import type { Database, Json } from "@/lib/supabase/types";
+import type { Database } from "@/lib/supabase/types";
 
 type ShopRow = Database["public"]["Tables"]["shops"]["Row"];
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 
-type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
-type DayHours = { closed: boolean; open: string; close: string };
-
-const DAY_ORDER: DayKey[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
-
-const DAY_LABELS: Record<DayKey, string> = {
-    mon: "Monday",
-    tue: "Tuesday",
-    wed: "Wednesday",
-    thu: "Thursday",
-    fri: "Friday",
-    sat: "Saturday",
-    sun: "Sunday",
-};
-
 const DEFAULT_DISTRICT = process.env.NEXT_PUBLIC_DEFAULT_DISTRICT ?? "Kurunegala";
-const NEW_CATEGORY_VALUE = "__new__";
-const DEFAULT_CATEGORY_ICON = "🏬";
-const DEFAULT_DAY_HOURS: DayHours = { closed: false, open: "09:00", close: "18:00" };
 
 const fieldInputClass =
     "min-h-12 w-full rounded-2xl border border-white/10 bg-[#081321]/80 px-4 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#FF6500]/50 focus:ring-2 focus:ring-[#FF6500]/20";
-
-function defaultHours(): Record<DayKey, DayHours> {
-    return DAY_ORDER.reduce((acc, day) => {
-        acc[day] = { ...DEFAULT_DAY_HOURS };
-        return acc;
-    }, {} as Record<DayKey, DayHours>);
-}
-
-function parseHours(value: Json | null): Record<DayKey, DayHours> {
-    const result = defaultHours();
-
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-        for (const day of DAY_ORDER) {
-            const raw = (value as Record<string, Json | undefined>)[day];
-            if (typeof raw !== "string") {
-                continue;
-            }
-            if (raw.toLowerCase() === "closed") {
-                result[day] = { ...result[day], closed: true };
-                continue;
-            }
-            const [open, close] = raw.split("-").map((part) => part.trim());
-            if (open && close) {
-                result[day] = { closed: false, open, close };
-            }
-        }
-    }
-
-    return result;
-}
-
-function serializeHours(hours: Record<DayKey, DayHours>): Record<string, string> {
-    const result: Record<string, string> = {};
-    for (const day of DAY_ORDER) {
-        const entry = hours[day];
-        result[day] = entry.closed ? "closed" : `${entry.open}-${entry.close}`;
-    }
-    return result;
-}
-
-function slugify(value: string) {
-    return value
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-+|-+$)/g, "");
-}
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
     return (
@@ -205,39 +142,15 @@ export function ShopProfileForm() {
                 return;
             }
 
-            let resolvedCategoryId = categoryId;
+            const categoryResult = await resolveCategory(supabase, categories, categoryId, trimmedNewCategory);
 
-            if (usingNewCategory) {
-                const existing = categories.find(
-                    (category) => category.name.toLowerCase() === trimmedNewCategory.toLowerCase(),
-                );
-
-                if (existing) {
-                    resolvedCategoryId = existing.id;
-                } else {
-                    const baseSlug = slugify(trimmedNewCategory) || "category";
-                    let slug = baseSlug;
-                    let attempt = 1;
-                    while (categories.some((category) => category.slug === slug)) {
-                        slug = `${baseSlug}-${attempt}`;
-                        attempt += 1;
-                    }
-
-                    const { data: insertedCategory, error: categoryError } = await supabase
-                        .from("categories")
-                        .insert({ name: trimmedNewCategory, icon: DEFAULT_CATEGORY_ICON, slug })
-                        .select()
-                        .single();
-
-                    if (categoryError || !insertedCategory) {
-                        setError(categoryError?.message ?? "Could not create the new category.");
-                        return;
-                    }
-
-                    setCategories((current) => [...current, insertedCategory].sort((a, b) => a.name.localeCompare(b.name)));
-                    resolvedCategoryId = insertedCategory.id;
-                }
+            if ("error" in categoryResult) {
+                setError(categoryResult.error);
+                return;
             }
+
+            const resolvedCategoryId = categoryResult.categoryId;
+            setCategories(categoryResult.categories);
 
             const payload = {
                 name: trimmedName,

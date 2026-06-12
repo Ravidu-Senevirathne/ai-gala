@@ -73,6 +73,7 @@ export type Database = {
                     hours: Json | null;
                     phone: string | null;
                     description: string | null;
+                    social_links: Json | null;
                     is_active: boolean;
                     created_at: string;
                 };
@@ -91,6 +92,7 @@ export type Database = {
                     hours?: Json | null;
                     phone?: string | null;
                     description?: string | null;
+                    social_links?: Json | null;
                     is_active?: boolean;
                     created_at?: string;
                 };
@@ -109,6 +111,7 @@ export type Database = {
                     hours?: Json | null;
                     phone?: string | null;
                     description?: string | null;
+                    social_links?: Json | null;
                     is_active?: boolean;
                     created_at?: string;
                 };
@@ -160,6 +163,47 @@ export type Database = {
                 Relationships: [
                     {
                         foreignKeyName: "discounts_shop_id_fkey";
+                        columns: ["shop_id"];
+                        isOneToOne: false;
+                        referencedRelation: "shops";
+                        referencedColumns: ["id"];
+                    },
+                ];
+            };
+            menu_items: {
+                Row: {
+                    id: string;
+                    shop_id: string;
+                    name: string;
+                    price: number | null;
+                    category: string | null;
+                    description: string | null;
+                    is_active: boolean;
+                    created_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    shop_id: string;
+                    name: string;
+                    price?: number | null;
+                    category?: string | null;
+                    description?: string | null;
+                    is_active?: boolean;
+                    created_at?: string;
+                };
+                Update: {
+                    id?: string;
+                    shop_id?: string;
+                    name?: string;
+                    price?: number | null;
+                    category?: string | null;
+                    description?: string | null;
+                    is_active?: boolean;
+                    created_at?: string;
+                };
+                Relationships: [
+                    {
+                        foreignKeyName: "menu_items_shop_id_fkey";
                         columns: ["shop_id"];
                         isOneToOne: false;
                         referencedRelation: "shops";
