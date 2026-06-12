@@ -2,17 +2,15 @@
 
 import { type FormEvent, type ReactNode, useState } from "react";
 
-import { DEFAULT_CATEGORY_ICON, NEW_CATEGORY_VALUE, resolveCategory } from "@/lib/shop-categories";
+import { createShopListing, type ShopWithCategory } from "@/app/admin/shop-actions";
+import { DEFAULT_CATEGORY_ICON, NEW_CATEGORY_VALUE } from "@/lib/shop-categories";
 import { type DayHours, type DayKey, DAY_LABELS, DAY_ORDER, defaultHours, serializeHours } from "@/lib/shop-hours";
 import { SOCIAL_LINK_META, type SocialLinkKey } from "@/lib/social-links";
-import { createClient } from "@/lib/supabase/client";
-import type { Database, Json, ShopStatus } from "@/lib/supabase/types";
+import type { Database, ShopStatus } from "@/lib/supabase/types";
+
+export type { ShopWithCategory } from "@/app/admin/shop-actions";
 
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
-
-export type ShopWithCategory = Database["public"]["Tables"]["shops"]["Row"] & {
-    categories: { name: string; icon: string } | null;
-};
 
 type MenuItemDraft = {
     name: string;
@@ -57,8 +55,6 @@ type AddShopFormProps = {
 };
 
 export function AddShopForm({ categories, onCategoriesChange, onShopCreated }: AddShopFormProps) {
-    const [supabase] = useState(() => createClient());
-
     const [name, setName] = useState("");
     const [categoryId, setCategoryId] = useState("");
     const [newCategoryName, setNewCategoryName] = useState("");
@@ -140,15 +136,6 @@ export function AddShopForm({ categories, onCategoriesChange, onShopCreated }: A
         setIsSubmitting(true);
 
         try {
-            const categoryResult = await resolveCategory(supabase, categories, categoryId, trimmedNewCategory);
-
-            if ("error" in categoryResult) {
-                setError(categoryResult.error);
-                return;
-            }
-
-            onCategoriesChange(categoryResult.categories);
-
             const links: Record<string, string> = {};
             for (const field of SOCIAL_LINK_META) {
                 const trimmed = socialLinks[field.key].trim();
@@ -157,53 +144,37 @@ export function AddShopForm({ categories, onCategoriesChange, onShopCreated }: A
                 }
             }
 
-            const { data: inserted, error: insertError } = await supabase
-                .from("shops")
-                .insert({
-                    name: trimmedName,
-                    category_id: categoryResult.categoryId,
-                    district: trimmedDistrict,
-                    address: trimmedAddress,
-                    phone: trimmedPhone,
-                    description: description.trim() || null,
-                    price_range_min: priceMin ? Number(priceMin) : null,
-                    price_range_max: priceMax ? Number(priceMax) : null,
-                    status,
-                    hours: serializeHours(hours),
-                    social_links: Object.keys(links).length > 0 ? (links as Json) : null,
-                    owner_id: null,
-                    is_active: true,
-                })
-                .select("*, categories(name, icon)")
-                .single();
-
-            if (insertError || !inserted) {
-                setError(insertError?.message ?? "Could not create the shop listing.");
-                return;
-            }
-
             const validMenuItems = menuItems
                 .map((item) => ({ ...item, name: item.name.trim() }))
                 .filter((item) => item.name.length > 0);
 
-            let menuWarning: string | null = null;
+            const result = await createShopListing({
+                name: trimmedName,
+                categoryId,
+                newCategoryName: trimmedNewCategory,
+                description: description.trim() || null,
+                district: trimmedDistrict,
+                address: trimmedAddress,
+                phone: trimmedPhone,
+                priceMin: priceMin ? Number(priceMin) : null,
+                priceMax: priceMax ? Number(priceMax) : null,
+                status,
+                hours: serializeHours(hours),
+                socialLinks: Object.keys(links).length > 0 ? links : null,
+                menuItems: validMenuItems.map((item) => ({
+                    name: item.name,
+                    price: item.price ? Number(item.price) : null,
+                    category: item.category.trim() || null,
+                })),
+            });
 
-            if (validMenuItems.length > 0) {
-                const { error: menuError } = await supabase.from("menu_items").insert(
-                    validMenuItems.map((item) => ({
-                        shop_id: inserted.id,
-                        name: item.name,
-                        price: item.price ? Number(item.price) : null,
-                        category: item.category.trim() || null,
-                    })),
-                );
-
-                if (menuError) {
-                    menuWarning = `Shop created, but menu items failed to save: ${menuError.message}`;
-                }
+            if ("error" in result) {
+                setError(result.error);
+                return;
             }
 
-            onShopCreated(inserted as ShopWithCategory);
+            onCategoriesChange(result.categories);
+            onShopCreated(result.shop);
 
             setName("");
             setCategoryId("");
@@ -219,8 +190,8 @@ export function AddShopForm({ categories, onCategoriesChange, onShopCreated }: A
             setSocialLinks(emptySocialLinks());
             setMenuItems([emptyMenuItem()]);
 
-            if (menuWarning) {
-                setError(menuWarning);
+            if (result.menuWarning) {
+                setError(result.menuWarning);
             } else {
                 setSuccess(`"${trimmedName}" was added to the AI-GALA directory.`);
             }
