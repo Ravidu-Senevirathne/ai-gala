@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { BrowseShopsSection } from "./browse-shops-section";
 import { CategoriesSection } from "./categories-section";
 import { FeaturesSection } from "./features-section";
+import { FloatingChatbot } from "./floating-chatbot";
 import { HeroSection } from "./hero-section";
 import { HowItWorksSection } from "./how-it-works-section";
 import { LiveDiscountsMarquee } from "./live-discounts-marquee";
@@ -60,6 +61,8 @@ export function LandingPage() {
             </main>
 
             <SiteFooter navLinks={navLinks} />
+
+            <FloatingChatbot />
         </div>
     );
 }
