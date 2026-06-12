@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import type { NavigationLink } from "./types";
@@ -102,14 +103,27 @@ function FooterLinkGroup({ title, links }: { title: string; links: NavigationLin
         <div className="space-y-4">
             <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-white/45">{title}</h3>
             <ul className="space-y-3 text-sm">
-                {links.map((link) => (
-                    <li key={link.label}>
-                        <a href={link.href} className="group inline-flex items-center gap-2 text-white/65 transition hover:text-white">
+                {links.map((link) => {
+                    const linkContent = (
+                        <>
                             <span className="h-1 w-1 rounded-full bg-[#FF6500]/0 transition group-hover:bg-[#FF6500]" />
                             {link.label}
-                        </a>
-                    </li>
-                ))}
+                        </>
+                    );
+                    return (
+                        <li key={link.label}>
+                            {link.href.startsWith("#") ? (
+                                <a href={link.href} className="group inline-flex items-center gap-2 text-white/65 transition hover:text-white">
+                                    {linkContent}
+                                </a>
+                            ) : (
+                                <Link href={link.href} className="group inline-flex items-center gap-2 text-white/65 transition hover:text-white">
+                                    {linkContent}
+                                </Link>
+                            )}
+                        </li>
+                    );
+                })}
             </ul>
         </div>
     );

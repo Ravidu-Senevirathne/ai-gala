@@ -2,9 +2,9 @@ import type { CategoryCard, ChatSuggestionChip, FeatureCard, MarqueeDeal, Naviga
 
 export const navLinks: NavigationLink[] = [
     { label: "Home", href: "#home" },
-    { label: "Categories", href: "#categories" },
+    { label: "Categories", href: "/categories" },
     { label: "Features", href: "#features" },
-    { label: "Browse Shops", href: "#browse-shops" },
+    { label: "Browse Shops", href: "/shops" },
     { label: "Contact", href: "#contact" },
 ];
 
