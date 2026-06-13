@@ -94,6 +94,15 @@ export default async function ShopPage({ params }: ShopPageProps) {
 
             <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
                 <div className="space-y-6 rounded-[2rem] border border-white/15 bg-white/10 p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-8">
+                    {shop.cover_image_url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                            src={shop.cover_image_url}
+                            alt={shop.name}
+                            className="-mx-6 -mt-6 h-48 w-[calc(100%+3rem)] rounded-t-[2rem] object-cover sm:-mx-8 sm:-mt-8 sm:h-64 sm:w-[calc(100%+4rem)]"
+                        />
+                    )}
+
                     <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
                             {category && (
@@ -103,6 +112,11 @@ export default async function ShopPage({ params }: ShopPageProps) {
                             )}
                             <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">{shop.name}</h1>
                             <p className="mt-1 text-sm text-white/50">{shop.district} District</p>
+                            {shop.google_rating !== null && (
+                                <p className="mt-2 text-sm text-[#FFB27A]">
+                                    ⭐ {shop.google_rating} {shop.google_review_count !== null && `(${shop.google_review_count.toLocaleString()} Google reviews)`}
+                                </p>
+                            )}
                         </div>
                         <span className={`shrink-0 rounded-full border px-3 py-1.5 text-sm capitalize ${STATUS_STYLES[liveStatus]}`}>
                             {liveStatus}
@@ -200,6 +214,16 @@ export default async function ShopPage({ params }: ShopPageProps) {
 
                     <div className="flex flex-wrap items-center gap-3 pt-2">
                         {shop.lat !== null && shop.lng !== null && <GetDirectionsButton lat={shop.lat} lng={shop.lng} />}
+                        {shop.google_location_url && (
+                            <a
+                                href={shop.google_location_url}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-medium text-white/80 transition hover:border-[#FF6500]/40 hover:text-white"
+                            >
+                                View on Google Maps
+                            </a>
+                        )}
                         <Link
                             href="/"
                             className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-medium text-white/80 transition hover:border-[#FF6500]/40 hover:text-white"

@@ -74,6 +74,10 @@ export type Database = {
                     phone: string | null;
                     description: string | null;
                     social_links: Json | null;
+                    google_location_url: string | null;
+                    google_rating: number | null;
+                    google_review_count: number | null;
+                    cover_image_url: string | null;
                     is_active: boolean;
                     created_at: string;
                 };
@@ -93,6 +97,10 @@ export type Database = {
                     phone?: string | null;
                     description?: string | null;
                     social_links?: Json | null;
+                    google_location_url?: string | null;
+                    google_rating?: number | null;
+                    google_review_count?: number | null;
+                    cover_image_url?: string | null;
                     is_active?: boolean;
                     created_at?: string;
                 };
@@ -112,6 +120,10 @@ export type Database = {
                     phone?: string | null;
                     description?: string | null;
                     social_links?: Json | null;
+                    google_location_url?: string | null;
+                    google_rating?: number | null;
+                    google_review_count?: number | null;
+                    cover_image_url?: string | null;
                     is_active?: boolean;
                     created_at?: string;
                 };

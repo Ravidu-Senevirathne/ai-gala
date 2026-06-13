@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Database, ProfileRole } from "@/lib/supabase/types";
 
 import { AddShopForm, type ShopWithCategory } from "./add-shop-form";
+import { EditShopForm } from "./edit-shop-form";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type JobRow = Database["public"]["Tables"]["jobs"]["Row"];
@@ -133,6 +134,7 @@ export function AdminPanel({ users, shops: initialShops, jobs: initialJobs, cate
     const [highlightedShop, setHighlightedShop] = useState(initialShops[0]?.name ?? "");
     const [togglingShopId, setTogglingShopId] = useState<string | null>(null);
     const [togglingJobId, setTogglingJobId] = useState<string | null>(null);
+    const [editingShop, setEditingShop] = useState<ShopWithCategory | null>(null);
 
     const pendingShopCount = useMemo(() => shops.filter((shop) => !shop.is_active).length, [shops]);
     const activeJobCount = useMemo(() => jobs.filter((job) => job.is_active).length, [jobs]);
@@ -180,6 +182,11 @@ export function AdminPanel({ users, shops: initialShops, jobs: initialJobs, cate
         setShops((current) => [shop, ...current]);
         setHighlightedShop((current) => current || shop.name);
         setTab("shops");
+    }
+
+    function handleShopUpdated(shop: ShopWithCategory) {
+        setShops((current) => current.map((item) => (item.id === shop.id ? shop : item)));
+        setEditingShop(null);
     }
 
     async function handleSignOut() {
@@ -390,14 +397,23 @@ export function AdminPanel({ users, shops: initialShops, jobs: initialJobs, cate
                                                     <StatusBadge active={shop.is_active} activeLabel="Active" inactiveLabel="Pending" />
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => toggleShopActive(shop)}
-                                                        disabled={togglingShopId === shop.id}
-                                                        className={`rounded-full border px-4 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${shop.is_active ? "border-white/10 bg-white/5 text-white/60 hover:border-red-400/40 hover:text-red-200" : "border-[#FF6500]/35 bg-[#FF6500]/10 text-[#FFB07C] hover:bg-[#FF6500]/20 hover:text-white"}`}
-                                                    >
-                                                        {togglingShopId === shop.id ? "Saving..." : shop.is_active ? "Deactivate" : "Approve / Verify"}
-                                                    </button>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setEditingShop(shop)}
+                                                            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white/65 transition hover:border-[#FF6500]/40 hover:text-white"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleShopActive(shop)}
+                                                            disabled={togglingShopId === shop.id}
+                                                            className={`rounded-full border px-4 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${shop.is_active ? "border-white/10 bg-white/5 text-white/60 hover:border-red-400/40 hover:text-red-200" : "border-[#FF6500]/35 bg-[#FF6500]/10 text-[#FFB07C] hover:bg-[#FF6500]/20 hover:text-white"}`}
+                                                        >
+                                                            {togglingShopId === shop.id ? "Saving..." : shop.is_active ? "Deactivate" : "Approve / Verify"}
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -531,6 +547,20 @@ export function AdminPanel({ users, shops: initialShops, jobs: initialJobs, cate
                     ) : null}
                 </section>
             </div>
+
+            {editingShop && (
+                <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 py-8 backdrop-blur-sm sm:p-6">
+                    <div className="w-full max-w-3xl">
+                        <EditShopForm
+                            shop={editingShop}
+                            categories={categories}
+                            onCategoriesChange={setCategories}
+                            onShopUpdated={handleShopUpdated}
+                            onCancel={() => setEditingShop(null)}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

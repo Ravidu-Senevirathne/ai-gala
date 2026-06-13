@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { useRevealOnScroll } from "@/components/landing/use-reveal-on-scroll";
 import { GetDirectionsButton } from "@/components/shared/get-directions-button";
+import { parseSocialLinks } from "@/lib/social-links";
 import type { Database, ShopStatus } from "@/lib/supabase/types";
 
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
@@ -84,54 +85,139 @@ function ArrowLeftIcon() {
     );
 }
 
+function NavigationIcon() {
+    return (
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+        </svg>
+    );
+}
+
+function PhoneIcon() {
+    return (
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
+        </svg>
+    );
+}
+
+function WhatsAppIcon() {
+    return (
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+            <path d="M12.012 2c-5.523 0-10 4.477-10 10 0 1.821.487 3.53 1.34 5.003L2 22l5.084-1.333A9.96 9.96 0 0 0 12.012 22c5.523 0 10-4.477 10-10s-4.477-10-10-10zm0 18.182a8.16 8.16 0 0 1-4.166-1.142l-.298-.176-3.087.81.823-3.012-.193-.31A8.158 8.158 0 0 1 3.83 12c0-4.512 3.67-8.182 8.182-8.182S20.194 7.488 20.194 12s-3.67 8.182-8.182 8.182z" />
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-1.732-.867-2.862-1.546-4.001-3.504-.302-.521.302-.484.864-1.61.099-.198.05-.371-.05-.52-.099-.149-.669-1.612-.916-2.207-.241-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.052 3.133 4.974 4.27 2.92 1.137 2.92.759 3.667.71.745-.05 2.424-.989 2.769-1.946.347-.957.347-1.778.247-1.945-.1-.165-.371-.264-.668-.404z" />
+        </svg>
+    );
+}
+
+function GlobeIcon() {
+    return (
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+        </svg>
+    );
+}
+
+const ICON_BUTTON_BASE =
+    "inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/70 transition duration-300 hover:scale-110";
+
+const ICON_BUTTON_ACCENT: Record<"orange" | "green" | "blue", string> = {
+    orange: "hover:border-[#FF6500]/40 hover:bg-[#FF6500]/10 hover:text-[#FFB27A]",
+    green: "hover:border-emerald-400/40 hover:bg-emerald-400/10 hover:text-emerald-300",
+    blue: "hover:border-sky-400/40 hover:bg-sky-400/10 hover:text-sky-300",
+};
+
+function IconLinkButton({
+    href,
+    label,
+    icon,
+    accent,
+    external,
+}: {
+    href: string;
+    label: string;
+    icon: React.ReactNode;
+    accent: "orange" | "green" | "blue";
+    external?: boolean;
+}) {
+    return (
+        <a
+            href={href}
+            title={label}
+            aria-label={label}
+            target={external ? "_blank" : undefined}
+            rel={external ? "noreferrer noopener" : undefined}
+            className={`${ICON_BUTTON_BASE} ${ICON_BUTTON_ACCENT[accent]}`}
+        >
+            {icon}
+        </a>
+    );
+}
+
 function ShopCard({ shop, index }: { shop: ShopWithCategory; index: number }) {
     const category = shop.categories;
+    const socialLinks = parseSocialLinks(shop.social_links);
+    const hasMapDirections = Boolean(shop.google_location_url) || (shop.lat !== null && shop.lng !== null);
+    const hasContactActions = hasMapDirections || Boolean(shop.phone) || Boolean(socialLinks.whatsapp) || Boolean(socialLinks.website);
 
     return (
         <article
             data-reveal
             style={{ transitionDelay: `${(index % 6) * 60}ms` }}
-            className="group flex flex-col rounded-[1.75rem] border border-white/15 bg-white/5 p-5 transition duration-300 hover:-translate-y-1 hover:border-[#FF6500]/35 hover:bg-white/10 hover:shadow-[0_20px_45px_rgba(0,0,0,0.28)]"
+            className="group flex flex-col overflow-hidden rounded-[1.75rem] border border-white/15 bg-white/5 transition duration-300 hover:-translate-y-1 hover:border-[#FF6500]/35 hover:bg-white/10 hover:shadow-[0_20px_45px_rgba(0,0,0,0.28)]"
         >
-            <div className="flex items-start justify-between gap-3">
-                {category ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/60">
-                        <span>{category.icon}</span> {category.name}
+            {shop.cover_image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={shop.cover_image_url} alt={shop.name} className="h-36 w-full object-cover" />
+            )}
+
+            <div className="flex flex-1 flex-col p-5">
+                <div className="flex items-start justify-between gap-3">
+                    {category ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/60">
+                            <span>{category.icon}</span> {category.name}
+                        </span>
+                    ) : (
+                        <span />
+                    )}
+                    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium capitalize ${STATUS_STYLES[shop.status]}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[shop.status]}`} />
+                        {shop.status}
                     </span>
-                ) : (
-                    <span />
-                )}
-                <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium capitalize ${STATUS_STYLES[shop.status]}`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[shop.status]}`} />
-                    {shop.status}
-                </span>
-            </div>
+                </div>
 
-            <h3 className="mt-4 text-lg font-semibold text-white">{shop.name}</h3>
-            {shop.address && <p className="mt-1 text-sm text-white/55">{shop.address}</p>}
-            {shop.description && <p className="mt-3 line-clamp-2 text-sm leading-6 text-white/65">{shop.description}</p>}
+                <h3 className="mt-4 text-lg font-semibold text-white">{shop.name}</h3>
+                {shop.address && <p className="mt-1 text-sm text-white/55">{shop.address}</p>}
 
-            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-white/60">
-                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">{formatPriceRange(shop.price_range_min, shop.price_range_max)}</span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">{shop.district}</span>
-            </div>
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-white/60">
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">{formatPriceRange(shop.price_range_min, shop.price_range_max)}</span>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">{shop.district}</span>
+                    {shop.google_rating !== null && (
+                        <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">
+                            ⭐ {shop.google_rating}
+                            {shop.google_review_count !== null && ` (${shop.google_review_count.toLocaleString()})`}
+                        </span>
+                    )}
+                </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-2 pt-1">
-                <Link
-                    href={`/shops/${shop.id}`}
-                    className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-medium text-white/80 transition hover:border-[#FF6500]/40 hover:text-white"
-                >
-                    View details
-                </Link>
-                {shop.lat !== null && shop.lng !== null && <GetDirectionsButton lat={shop.lat} lng={shop.lng} />}
-                {shop.phone && (
-                    <a
-                        href={`tel:${shop.phone}`}
-                        className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-medium text-white/80 transition hover:border-[#FF6500]/40 hover:text-white"
-                    >
-                        Call
-                    </a>
-                )}
+                <div className="mt-5 flex flex-wrap items-center justify-end gap-3 pt-1">
+                    {hasContactActions && (
+                        <div className="flex items-center gap-2">
+                            {shop.google_location_url ? (
+                                <IconLinkButton href={shop.google_location_url} label="Get directions" icon={<NavigationIcon />} accent="orange" external />
+                            ) : (
+                                shop.lat !== null && shop.lng !== null && <GetDirectionsButton lat={shop.lat} lng={shop.lng} iconOnly />
+                            )}
+                            {shop.phone && <IconLinkButton href={`tel:${shop.phone}`} label="Call shop" icon={<PhoneIcon />} accent="orange" />}
+                            {socialLinks.whatsapp && (
+                                <IconLinkButton href={socialLinks.whatsapp} label="Chat on WhatsApp" icon={<WhatsAppIcon />} accent="green" external />
+                            )}
+                            {socialLinks.website && <IconLinkButton href={socialLinks.website} label="Visit website" icon={<GlobeIcon />} accent="blue" external />}
+                        </div>
+                    )}
+                </div>
             </div>
         </article>
     );

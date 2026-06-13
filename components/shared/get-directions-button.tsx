@@ -6,9 +6,18 @@ type GetDirectionsButtonProps = {
     lat: number;
     lng: number;
     className?: string;
+    iconOnly?: boolean;
 };
 
-export function GetDirectionsButton({ lat, lng, className }: GetDirectionsButtonProps) {
+function NavigationIcon() {
+    return (
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+        </svg>
+    );
+}
+
+export function GetDirectionsButton({ lat, lng, className, iconOnly }: GetDirectionsButtonProps) {
     const [isLocating, setIsLocating] = useState(false);
 
     function openDirections() {
@@ -34,6 +43,28 @@ export function GetDirectionsButton({ lat, lng, className }: GetDirectionsButton
                 setIsLocating(false);
                 window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}`, "_blank", "noopener,noreferrer");
             },
+        );
+    }
+
+    if (iconOnly) {
+        return (
+            <button
+                type="button"
+                onClick={openDirections}
+                disabled={isLocating}
+                title="Get directions"
+                aria-label="Get directions"
+                className={
+                    className ??
+                    "inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/70 transition duration-300 hover:scale-110 hover:border-[#FF6500]/40 hover:bg-[#FF6500]/10 hover:text-[#FFB27A] disabled:cursor-not-allowed disabled:opacity-60"
+                }
+            >
+                {isLocating ? (
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : (
+                    <NavigationIcon />
+                )}
+            </button>
         );
     }
 
