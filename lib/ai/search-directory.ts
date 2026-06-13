@@ -1,4 +1,5 @@
 import { haversineDistanceKm } from "@/lib/geo/haversine";
+import { getLiveShopStatus } from "@/lib/shop-hours";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 import type { JobResult, SearchDirectoryInput, ShopResult } from "./types";
@@ -55,6 +56,8 @@ async function searchShops(input: SearchDirectoryInput): Promise<ShopResult[]> {
         return [];
     }
 
+    const now = new Date();
+
     let results: ShopResult[] = data
         .filter((shop) => {
             if (input.category) {
@@ -79,7 +82,7 @@ async function searchShops(input: SearchDirectoryInput): Promise<ShopResult[]> {
                 id: shop.id,
                 name: shop.name,
                 category: category?.name ?? null,
-                status: shop.status,
+                status: getLiveShopStatus(shop, now),
                 address: shop.address,
                 district: shop.district,
                 priceRangeMin: shop.price_range_min,

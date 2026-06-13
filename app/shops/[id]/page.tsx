@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { DetailPageHeader } from "@/components/shared/detail-page-header";
 import { GetDirectionsButton } from "@/components/shared/get-directions-button";
+import { getLiveShopStatus } from "@/lib/shop-hours";
 import { parseSocialLinks, SOCIAL_LINK_META } from "@/lib/social-links";
 import { createClient } from "@/lib/supabase/server";
 import type { Database, ShopStatus } from "@/lib/supabase/types";
@@ -69,6 +70,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
     const category = shop.categories as { name: string; icon: string; slug: string } | null;
     const hours = (shop.hours ?? null) as Record<string, string> | null;
     const socialLinks = parseSocialLinks(shop.social_links);
+    const liveStatus = getLiveShopStatus(shop, new Date());
 
     const menuSections = new Map<string, MenuItemRow[]>();
     for (const item of menuItems ?? []) {
@@ -102,8 +104,8 @@ export default async function ShopPage({ params }: ShopPageProps) {
                             <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">{shop.name}</h1>
                             <p className="mt-1 text-sm text-white/50">{shop.district} District</p>
                         </div>
-                        <span className={`shrink-0 rounded-full border px-3 py-1.5 text-sm capitalize ${STATUS_STYLES[shop.status]}`}>
-                            {shop.status}
+                        <span className={`shrink-0 rounded-full border px-3 py-1.5 text-sm capitalize ${STATUS_STYLES[liveStatus]}`}>
+                            {liveStatus}
                         </span>
                     </div>
 

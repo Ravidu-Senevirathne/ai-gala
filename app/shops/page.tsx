@@ -4,6 +4,7 @@ import { navLinks } from "@/components/landing/landing-data";
 import { SiteFooter } from "@/components/landing/site-footer";
 import { SiteHeader } from "@/components/landing/site-header";
 import { ShopsDirectory, type ShopWithCategory } from "@/components/shops/shops-directory";
+import { getLiveShopStatus } from "@/lib/shop-hours";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -28,6 +29,12 @@ export default async function ShopsPage({ searchParams }: ShopsPageProps) {
         supabase.from("categories").select("*").order("name"),
     ]);
 
+    const now = new Date();
+    const liveShops = (shops ?? []).map((shop) => ({
+        ...shop,
+        status: getLiveShopStatus(shop, now),
+    })) as ShopWithCategory[];
+
     return (
         <div className="min-h-screen overflow-x-hidden bg-[#0B192C] text-[#F1F1F1]">
             <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -39,7 +46,7 @@ export default async function ShopsPage({ searchParams }: ShopsPageProps) {
             <SiteHeader navLinks={navLinks} />
 
             <main>
-                <ShopsDirectory shops={(shops ?? []) as ShopWithCategory[]} categories={categories ?? []} initialCategorySlug={category} />
+                <ShopsDirectory shops={liveShops} categories={categories ?? []} initialCategorySlug={category} />
             </main>
 
             <SiteFooter navLinks={navLinks} />

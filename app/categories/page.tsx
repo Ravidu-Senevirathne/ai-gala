@@ -4,6 +4,7 @@ import { CategoriesExplorer, type CategoryWithStats } from "@/components/categor
 import { navLinks } from "@/components/landing/landing-data";
 import { SiteFooter } from "@/components/landing/site-footer";
 import { SiteHeader } from "@/components/landing/site-header";
+import { getLiveShopStatus } from "@/lib/shop-hours";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -16,9 +17,10 @@ export default async function CategoriesPage() {
 
     const [{ data: categories }, { data: shops }] = await Promise.all([
         supabase.from("categories").select("*").order("name"),
-        supabase.from("shops").select("category_id, status").eq("is_active", true),
+        supabase.from("shops").select("category_id, status, hours").eq("is_active", true),
     ]);
 
+    const now = new Date();
     const statsByCategory = new Map<string, { total: number; open: number }>();
     for (const shop of shops ?? []) {
         if (!shop.category_id) {
@@ -26,7 +28,7 @@ export default async function CategoriesPage() {
         }
         const entry = statsByCategory.get(shop.category_id) ?? { total: 0, open: 0 };
         entry.total += 1;
-        if (shop.status === "open") {
+        if (getLiveShopStatus(shop, now) === "open") {
             entry.open += 1;
         }
         statsByCategory.set(shop.category_id, entry);
