@@ -69,6 +69,15 @@ function UserIcon() {
     );
 }
 
+function PhoneIcon() {
+    return (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="6" y="2" width="12" height="20" rx="2.5" />
+            <path d="M11 18h2" />
+        </svg>
+    );
+}
+
 function StoreIcon() {
     return (
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -377,7 +386,14 @@ export function AuthPages() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0B192C] text-[#F1F1F1]">
+        <div className="min-h-screen text-[#F1F1F1]">
+            <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden">
+                <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: "url(/kurunegala.png)" }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-[#0B192C]/90 via-[#0B192C]/85 to-[#0B192C]/95" />
+            </div>
             <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
                 <div className="absolute left-[-10rem] top-[-8rem] h-72 w-72 rounded-full bg-[#FF6500]/18 blur-3xl sm:h-80 sm:w-80" />
                 <div className="absolute right-[-9rem] top-24 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl sm:h-96 sm:w-96" />
@@ -539,77 +555,85 @@ export function AuthPages() {
                             ) : null}
 
                             {role === "owner" ? (
-                                <div className="space-y-4 rounded-[1.5rem] border border-[#FF6500]/15 bg-[#FF6500]/5 p-4">
-                                    <div>
-                                        <p className="text-sm font-semibold text-white">Shop owner verification</p>
-                                        <p className="mt-1 text-sm leading-6 text-white/65">
-                                            Confirm your business before entering the owner workspace.
-                                        </p>
+                                <div className="space-y-5 rounded-2xl border border-[#FF6500]/15 bg-[#FF6500]/5 p-4 sm:p-5">
+                                    <div className="flex items-start gap-3">
+                                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FF6500]/15 text-[#FF6500]">
+                                            <ShieldIcon />
+                                        </span>
+                                        <div>
+                                            <p className="text-sm font-semibold text-white">Shop owner verification</p>
+                                            <p className="mt-1 text-sm leading-6 text-white/65">
+                                                Confirm your business before entering the owner workspace.
+                                            </p>
+                                        </div>
                                     </div>
 
-                                    <div className="grid gap-4 sm:grid-cols-[1.2fr_0.8fr]">
-                                        <div className="space-y-2">
-                                            <span className="text-sm font-medium text-white/80">Phone Number</span>
-                                            <div className="flex gap-2">
+                                    <div className="space-y-2">
+                                        <span className="text-sm font-medium text-white/80">Phone number</span>
+                                        <div className="flex flex-col gap-2 sm:flex-row">
+                                            <div className="relative flex-1">
+                                                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/35">
+                                                    <PhoneIcon />
+                                                </span>
                                                 <input
                                                     type="tel"
                                                     inputMode="tel"
                                                     placeholder="+947XXXXXXXX"
                                                     value={ownerPhone}
                                                     onChange={(event) => setOwnerPhone(event.target.value)}
-                                                    className="min-h-12 flex-1 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none transition focus:border-[#FF6500]/50 focus:ring-2 focus:ring-[#FF6500]/20"
+                                                    className="min-h-12 w-full rounded-xl border border-white/10 bg-white/5 pl-12 pr-4 text-sm text-white outline-none transition focus:border-[#FF6500]/50 focus:ring-2 focus:ring-[#FF6500]/20"
                                                 />
-                                                <button
-                                                    type="button"
-                                                    onClick={handleSendOtp}
-                                                    disabled={isSendingOtp || phoneVerified}
-                                                    className="shrink-0 rounded-xl border border-[#FF6500]/40 bg-[#FF6500]/15 px-4 text-sm font-medium text-white transition hover:bg-[#FF6500]/25 disabled:cursor-not-allowed disabled:opacity-55"
-                                                >
-                                                    {isSendingOtp ? "Sending..." : otpSent ? "Resend" : "Send code"}
-                                                </button>
                                             </div>
-
-                                            {otpSent && !phoneVerified ? (
-                                                <div className="space-y-2">
-                                                    <div className="flex gap-2">
-                                                        {phoneDigits.map((digit, index) => (
-                                                            <input
-                                                                key={index}
-                                                                inputMode="numeric"
-                                                                maxLength={1}
-                                                                value={digit}
-                                                                onChange={(event) => updateDigit(index, event.target.value)}
-                                                                className="h-12 w-full min-w-0 rounded-xl border border-white/10 bg-white/5 text-center text-lg font-semibold text-white outline-none transition focus:border-[#FF6500]/50 focus:ring-2 focus:ring-[#FF6500]/20"
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleVerifyOtp}
-                                                        disabled={isVerifyingOtp}
-                                                        className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-xs font-medium text-emerald-200 transition hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-55"
-                                                    >
-                                                        {isVerifyingOtp ? "Verifying..." : "Verify code"}
-                                                    </button>
-                                                </div>
-                                            ) : null}
-
-                                            {phoneVerified ? (
-                                                <p className="text-xs text-emerald-300">Phone verified ✓</p>
-                                            ) : (
-                                                <p className="text-xs text-white/45">
-                                                    SMS verification requires an SMS provider configured in Supabase.
-                                                </p>
-                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={handleSendOtp}
+                                                disabled={isSendingOtp || phoneVerified}
+                                                className="min-h-12 shrink-0 whitespace-nowrap rounded-xl border border-[#FF6500]/40 bg-[#FF6500]/15 px-5 text-sm font-medium text-white transition hover:bg-[#FF6500]/25 disabled:cursor-not-allowed disabled:opacity-55 sm:w-auto"
+                                            >
+                                                {isSendingOtp ? "Sending..." : otpSent ? "Resend code" : "Send code"}
+                                            </button>
                                         </div>
 
-                                        <GlassField
-                                            label="Shop Verification Code"
-                                            placeholder="KUR-2048"
-                                            value={verificationCode}
-                                            onChange={setVerificationCode}
-                                        />
+                                        {otpSent && !phoneVerified ? (
+                                            <div className="space-y-3 pt-1">
+                                                <div className="grid grid-cols-6 gap-2">
+                                                    {phoneDigits.map((digit, index) => (
+                                                        <input
+                                                            key={index}
+                                                            inputMode="numeric"
+                                                            maxLength={1}
+                                                            value={digit}
+                                                            onChange={(event) => updateDigit(index, event.target.value)}
+                                                            className="aspect-square w-full min-w-0 rounded-xl border border-white/10 bg-white/5 text-center text-lg font-semibold text-white outline-none transition focus:border-[#FF6500]/50 focus:ring-2 focus:ring-[#FF6500]/20"
+                                                        />
+                                                    ))}
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleVerifyOtp}
+                                                    disabled={isVerifyingOtp}
+                                                    className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-xs font-medium text-emerald-200 transition hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-55"
+                                                >
+                                                    {isVerifyingOtp ? "Verifying..." : "Verify code"}
+                                                </button>
+                                            </div>
+                                        ) : null}
+
+                                        {phoneVerified ? (
+                                            <p className="text-xs text-emerald-300">Phone verified ✓</p>
+                                        ) : (
+                                            <p className="text-xs text-white/45">
+                                                SMS verification requires an SMS provider configured in Supabase.
+                                            </p>
+                                        )}
                                     </div>
+
+                                    <GlassField
+                                        label="Shop verification code"
+                                        placeholder="KUR-2048"
+                                        value={verificationCode}
+                                        onChange={setVerificationCode}
+                                    />
                                 </div>
                             ) : null}
 
