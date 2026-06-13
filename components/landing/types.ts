@@ -34,7 +34,7 @@ export type ShopCard = {
 export type CategoryCard = {
     icon: string;
     name: string;
-    count: string;
+    image: string;
 };
 
 export type StatItem = {

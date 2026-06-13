@@ -2,9 +2,7 @@ import type { CategoryCard, ChatSuggestionChip, FeatureCard, MarqueeDeal, Naviga
 
 export const navLinks: NavigationLink[] = [
     { label: "Home", href: "#home" },
-    { label: "Categories", href: "/categories" },
     { label: "Features", href: "#features" },
-    { label: "Browse Shops", href: "/shops" },
     { label: "Contact", href: "#contact" },
 ];
 
@@ -16,14 +14,14 @@ export const stats: StatItem[] = [
 ];
 
 export const categories: CategoryCard[] = [
-    { icon: "💊", name: "Pharmacies", count: "32 listings" },
-    { icon: "🍛", name: "Food & Cafes", count: "58 listings" },
-    { icon: "🔧", name: "Repairs & Services", count: "41 listings" },
-    { icon: "🛒", name: "Groceries", count: "47 listings" },
-    { icon: "📱", name: "Electronics", count: "29 listings" },
-    { icon: "👕", name: "Fashion & Tailoring", count: "36 listings" },
-    { icon: "🏠", name: "Home & Hardware", count: "33 listings" },
-    { icon: "🚗", name: "Vehicle Services", count: "24 listings" },
+    { icon: "💊", name: "Pharmacies", image: "https://i.pinimg.com/736x/da/46/95/da4695808f92eacb92d83519480f7a0b.jpg" },
+    { icon: "🍛", name: "Food & Cafes", image: "https://i.pinimg.com/736x/54/92/2d/54922dd7b732dc69b31b001fd2bac63b.jpg" },
+    { icon: "🔧", name: "Repairs & Services", image: "https://i.pinimg.com/736x/12/15/0d/12150d678b3f018e53f9dc5a3228ba42.jpg" },
+    { icon: "🛒", name: "Groceries", image: "https://i.pinimg.com/736x/46/06/43/460643ae55a724edfc299efcf0de6973.jpg" },
+    { icon: "📱", name: "Electronics", image: "https://i.pinimg.com/736x/b5/6d/41/b56d41e871f6bfe418ff0dff7b92cb7b.jpg" },
+    { icon: "👕", name: "Fashion & Tailoring", image: "https://i.pinimg.com/736x/1a/4a/87/1a4a8742d2868edcad1be281287d4bf4.jpg" },
+    { icon: "🏠", name: "Home & Hardware", image: "https://i.pinimg.com/736x/99/a4/f9/99a4f9dd4ab09138f60bfab952c17a9c.jpg" },
+    { icon: "🚗", name: "Vehicle Services", image: "https://i.pinimg.com/736x/ae/62/34/ae6234302e5c7bc85492acdcf8e7cd57.jpg" },
 ];
 
 export const testimonials: Testimonial[] = [

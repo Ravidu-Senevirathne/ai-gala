@@ -41,13 +41,27 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
                         key={category.name}
                         data-reveal
                         style={{ transitionDelay: `${index * 70}ms` }}
-                        className="group rounded-[1.5rem] border border-white/15 bg-white/5 p-5 transition duration-300 hover:-translate-y-1 hover:border-[#FF6500]/35 hover:bg-white/10 hover:shadow-[0_20px_45px_rgba(0,0,0,0.26)]"
+                        className="group relative aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-white/15 transition duration-300 hover:-translate-y-1 hover:border-[#FF6500]/40 hover:shadow-[0_20px_45px_rgba(0,0,0,0.35)]"
                     >
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-[#07111f]/60 text-2xl transition duration-300 group-hover:shadow-[0_0_28px_rgba(255,101,0,0.2)]">
-                            {category.icon}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={category.image}
+                            alt={category.name}
+                            className="absolute inset-0 h-full w-full scale-105 object-cover transition duration-500 ease-out group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#07111f] via-[#07111f]/55 to-[#07111f]/5 transition duration-300 group-hover:from-[#07111f]/95 group-hover:via-[#07111f]/45" />
+
+                        <div className="relative flex h-full flex-col justify-between p-4">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-sm backdrop-blur-md transition duration-300 group-hover:border-[#FF6500]/50 group-hover:bg-[#FF6500]/20">
+                                {category.icon}
+                            </div>
+                            <div className="flex items-end justify-between gap-2">
+                                <h3 className="text-base font-semibold leading-snug text-white drop-shadow-sm">{category.name}</h3>
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white opacity-0 backdrop-blur-md transition duration-300 group-hover:translate-x-0 group-hover:opacity-100 group-hover:bg-[#FF6500] group-hover:border-[#FF6500] translate-x-1">
+                                    <ArrowRightIcon />
+                                </span>
+                            </div>
                         </div>
-                        <h3 className="mt-5 text-lg font-semibold text-white">{category.name}</h3>
-                        <p className="mt-2 text-sm text-white/55">{category.count}</p>
                     </article>
                 ))}
             </div>
