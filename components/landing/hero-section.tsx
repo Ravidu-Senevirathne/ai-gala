@@ -1,6 +1,6 @@
 "use client";
 
-import { BudgetMatcherChat } from "./budget-matcher-chat";
+import { AiGalaChatInterface } from "./ai-gala-chat-interface";
 
 type HeroSectionProps = {
     subtitle: string;
@@ -47,9 +47,9 @@ export function HeroSection({ subtitle }: HeroSectionProps) {
             </div>
 
             <div className="relative flex items-center justify-center lg:justify-end" data-reveal>
-                <div className="absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_top,rgba(255,101,0,0.15),transparent_55%)]" />
+                <div className="absolute inset-0 rounded-4xl bg-[radial-gradient(circle_at_top,rgba(255,101,0,0.15),transparent_55%)]" />
                 <div className="float-gentle relative w-full max-w-xl">
-                    <BudgetMatcherChat />
+                    <AiGalaChatInterface variant="hero" />
                 </div>
             </div>
         </section>

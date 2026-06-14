@@ -62,4 +62,7 @@ export type ChatApiResponse = {
     reply: string;
     results?: ShopResult[] | JobResult[];
     resultType?: "shop" | "job";
+    fallback?: boolean;
+    error?: string;
+    details?: string;
 };

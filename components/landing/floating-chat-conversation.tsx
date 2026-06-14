@@ -110,7 +110,8 @@ export function FloatingChatConversation({ greetingOverride }: FloatingChatConve
                     resultType: data.resultType,
                 },
             ]);
-        } catch {
+        } catch (error) {
+            console.error("Floating chat request failed:", error);
             setMessages((current) => [
                 ...current,
                 {

@@ -128,7 +128,8 @@ export function BudgetMatcherChat({ suggestionChips = defaultChips }: BudgetMatc
 
             const data = (await response.json()) as ChatApiResult;
             setResult(data);
-        } catch {
+        } catch (error) {
+            console.error("Budget matcher request failed:", error);
             setResult({ reply: "Sorry, something went wrong while reaching AI-GALA. Please try again." });
         } finally {
             setIsProcessing(false);
