@@ -90,8 +90,15 @@ function getWelcomeMessage(userName?: string | null) {
     return `Ayubowan machan, I’m AI-GALA for ${district}. Ask me in Sinhala, Singlish, or English.`;
 }
 
-function pickSinhalaVoice(voices: SpeechSynthesisVoice[]) {
-    return voices.find((voice) => voice.lang === "si-LK") ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("si")) ?? voices.find((voice) => voice.default) ?? voices[0] ?? null;
+function pickVoiceForLang(voices: SpeechSynthesisVoice[], lang: string) {
+    // Exact match first, then prefix match, then default, then first available
+    return (
+        voices.find((v) => v.lang === lang) ??
+        voices.find((v) => v.lang.toLowerCase().startsWith(lang.split("-")[0].toLowerCase())) ??
+        voices.find((v) => v.default) ??
+        voices[0] ??
+        null
+    );
 }
 
 function ChatSkeleton() {
@@ -186,13 +193,19 @@ export function AiGalaChatInterface({ userName, variant = "hero", onClose }: AiG
             return;
         }
 
+        // Choose language based on whether the reply contains Sinhala script.
+        // If it's Sinhala, keep si-LK so the browser at least attempts it.
+        // If it's Latin/Singlish/English, use en-US so words are actually spoken.
+        const hasSinhala = isSinhalaText(text);
+        const lang = hasSinhala ? "si-LK" : "en-US";
+
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "si-LK";
+        utterance.lang = lang;
         utterance.rate = 1;
         utterance.pitch = 1;
         utterance.volume = 1;
 
-        const voice = pickSinhalaVoice(voices);
+        const voice = pickVoiceForLang(voices, lang);
         if (voice) {
             utterance.voice = voice;
         }
