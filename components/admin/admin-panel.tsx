@@ -135,9 +135,22 @@ export function AdminPanel({ users, shops: initialShops, jobs: initialJobs, cate
     const [togglingShopId, setTogglingShopId] = useState<string | null>(null);
     const [togglingJobId, setTogglingJobId] = useState<string | null>(null);
     const [editingShop, setEditingShop] = useState<ShopWithCategory | null>(null);
+    const [shopSearch, setShopSearch] = useState("");
 
     const pendingShopCount = useMemo(() => shops.filter((shop) => !shop.is_active).length, [shops]);
     const activeJobCount = useMemo(() => jobs.filter((job) => job.is_active).length, [jobs]);
+
+    const filteredShops = useMemo(() => {
+        const query = shopSearch.trim().toLowerCase();
+        if (!query) return shops;
+        return shops.filter((shop) => {
+            return (
+                shop.name.toLowerCase().includes(query) ||
+                shop.district?.toLowerCase().includes(query) ||
+                shop.categories?.name?.toLowerCase().includes(query)
+            );
+        });
+    }, [shops, shopSearch]);
 
     const promoIdeas = useMemo(
         () =>
@@ -365,6 +378,15 @@ export function AdminPanel({ users, shops: initialShops, jobs: initialJobs, cate
 
                     {tab === "shops" ? (
                         <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                            <div className="mb-4">
+                                <input
+                                    type="search"
+                                    value={shopSearch}
+                                    onChange={(event) => setShopSearch(event.target.value)}
+                                    placeholder="Search shops by name, category, or district..."
+                                    className="w-full max-w-md rounded-2xl border border-white/10 bg-[#081321]/80 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none transition focus:border-[#FF6500]/40"
+                                />
+                            </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full min-w-[860px] border-collapse text-left">
                                     <thead>
@@ -385,7 +407,14 @@ export function AdminPanel({ users, shops: initialShops, jobs: initialJobs, cate
                                                 </td>
                                             </tr>
                                         )}
-                                        {shops.map((shop) => (
+                                        {shops.length > 0 && filteredShops.length === 0 && (
+                                            <tr>
+                                                <td colSpan={6} className="px-4 py-6 text-center text-sm text-white/50">
+                                                    No shops match &ldquo;{shopSearch}&rdquo;.
+                                                </td>
+                                            </tr>
+                                        )}
+                                        {filteredShops.map((shop) => (
                                             <tr key={shop.id} className="border-b border-white/5 text-sm text-white/80 last:border-0">
                                                 <td className="px-4 py-4 font-medium text-white">{shop.name}</td>
                                                 <td className="px-4 py-4">
